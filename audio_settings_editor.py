@@ -51,15 +51,22 @@ class AudioSettingsEditor:
             label.grid(row=filter_num - 1, column=0, padx=5, pady=5)
             if label_text == "Tonality":
                 up_button = tk.Button(frame_buttons, text="▲", font=("Arial", 16),
-                                      command=lambda filter_num=filter_num: self.update_tonality_value(True))
+                                      command=lambda filter_num=filter_num: (
+                                          self.update_tonality_value(True),
+                                          self.calculate_filter_6_value()))  # Combine both function calls into one tuple
                 down_button = tk.Button(frame_buttons, text="▼", font=("Arial", 16),
-                                        command=lambda filter_num=filter_num: self.update_tonality_value(False))
+                                        command=lambda filter_num=filter_num: (
+                                            self.update_tonality_value(False),
+                                            self.calculate_filter_6_value()))  # Combine both function calls into one tuple
             else:
                 up_button = tk.Button(frame_buttons, text="▲", font=("Arial", 16),
-                                      command=lambda filter_num=filter_num: self.update_filter_value(filter_num, True))
+                                      command=lambda filter_num=filter_num: (
+                                          self.update_filter_value(filter_num, True),
+                                          self.calculate_filter_6_value()))  # Combine both function calls into one tuple
                 down_button = tk.Button(frame_buttons, text="▼", font=("Arial", 16),
-                                        command=lambda filter_num=filter_num: self.update_filter_value(filter_num,
-                                                                                                       False))
+                                        command=lambda filter_num=filter_num: (
+                                            self.update_filter_value(filter_num, False),
+                                            self.calculate_filter_6_value()))  # Combine both function calls into one tuple
             up_button.grid(row=filter_num - 1, column=1, padx=5, pady=5)
             down_button.grid(row=filter_num - 1, column=2, padx=5, pady=5)
 
@@ -74,6 +81,9 @@ class AudioSettingsEditor:
         # Add an exit button to close the trial screen
         exit_button = tk.Button(trial_screen, text="Exit", font=("Arial", 16), command=lambda: sys.exit(0))
         exit_button.pack(pady=20)
+
+        # Call calculate_filter_6_value() when opening a trial screen
+        self.calculate_filter_6_value()
 
         self.pages = {}
         self.pages[trial_num] = trial_screen
@@ -137,7 +147,24 @@ class AudioSettingsEditor:
                     if part == "Gain":
                         current_db = float(parts[j + 1])
                         parts[j + 1] = "{:.2f}".format(current_db + 0.25 if up else current_db - 0.25)
-                lines[i] = " ".join(parts)
+                        new_db = current_db + 0.25 if up else current_db - 0.25
+                        # Check if Bass value became 0 after adjusting Tonality or Filter 3 directly
+                        if filter_num == 3 and new_db == 0:
+                            # Set both Filter 3 and Filter 6 values to 0
+                            self.set_filter_value(3, 0)
+                            self.set_filter_value(6, 0)
+                            return
+                        # Set both Filter 2 and Filter 6 values to 0
+                        if filter_num == 2 and new_db == 0:
+                            self.set_filter_value(2, 0)
+                            self.set_filter_value(6, 0)
+                            return
+                        lines[i] = " ".join(parts)
+
+        # Update Filter 6 value when Filter 2 is adjusted
+        if filter_num == 2:
+            self.set_filter_value(6,
+                                  0)  # Set value as 0 for now, it will be updated based on the condition in set_filter_value
 
         self.update_file(self.file_path, lines)
         self.print_preference()
@@ -167,6 +194,64 @@ class AudioSettingsEditor:
         self.update_file(self.file_path, lines)
         self.print_preference()
 
+    def calculate_filter_6_value(self):
+        if not self.file_path:
+            print("Error: Preference.txt not uploaded.")
+            return
+
+        lines = self.read_file(self.file_path)
+
+        # Check the value of filter 3
+        filter_3_value = self.get_filter_value(lines, 3)
+        if filter_3_value == 0:
+            # If filter 3 value is 0, set filter 6 to 0
+            self.set_filter_6_value(0)
+            return
+
+        # If filter 3 value is not 0, proceed with the next condition
+        filter_2_value = self.get_filter_value(lines, 2)
+        if filter_2_value == 0:
+            # If filter 2 value is 0, set filter 6 to 0
+            self.set_filter_6_value(0)
+            return
+
+        if filter_2_value != 0:
+            # Count the steps of 0.25 dB in filter 2
+            steps = abs(filter_2_value) / 0.25
+            # Multiply steps by 0.175 dB
+            filter_6_value = steps * 0.175
+            # Adjust the sign based on the sign of filter 2
+            filter_6_value *= 1 if filter_2_value > 0 else -1
+            # Write the calculated value to filter 6
+            self.set_filter_6_value(filter_6_value)
+
+    def get_filter_value(self, lines, filter_num):
+        # Helper method to extract the gain value of a filter from the lines of Preference.txt
+        for line in lines:
+            if f"Filter {filter_num}" in line:
+                parts = line.split(" ")
+                for part in parts:
+                    if part == "Gain":
+                        return float(parts[parts.index(part) + 1])
+        return None
+
+    def set_filter_6_value(self, value):
+        # Set the value of filter 6 in Preference.txt
+        if not self.file_path:
+            print("Error: Preference.txt not uploaded.")
+            return
+
+        lines = self.read_file(self.file_path)
+        for i, line in enumerate(lines):
+            if "Filter 6" in line:
+                parts = line.split(" ")
+                for j, part in enumerate(parts):
+                    if part == "Gain":
+                        parts[j + 1] = "{:.2f}".format(value)
+                lines[i] = " ".join(parts)
+
+        self.update_file(self.file_path, lines)
+        self.print_preference()
     def read_file(self, file_path):
         with open(file_path, "r") as file:
             lines = file.readlines()
