@@ -9,12 +9,13 @@ from excel_export import export_to_excel
 class AudioSettingsEditor:
     def __init__(self):
         self.file_path = ""
+        self.pm_folder_path = os.path.join(os.getcwd(), "pm")  # Get the path to the "pm" folder in the current directory
         self.track_paths = {
-            1: "C:/Users/Admin/Desktop/LSPU_Target_Curve/EQ/PM/SD30s.wav",
-            2: "C:/Users/Admin/Desktop/LSPU_Target_Curve/EQ/PM/SO30s.wav",
-            3: "C:/Users/Admin/Desktop/LSPU_Target_Curve/EQ/PM/IV30s.wav",
-            4: "C:/Users/Admin/Desktop/LSPU_Target_Curve/EQ/PM/PY30s.wav",
-            5: "C:/Users/Admin/Desktop/LSPU_Target_Curve/EQ/PM/DP30s.wav"
+            1: os.path.join(self.pm_folder_path, "1.wav"),
+            2: os.path.join(self.pm_folder_path, "2.wav"),
+            3: os.path.join(self.pm_folder_path, "3.wav"),
+            4: os.path.join(self.pm_folder_path, "4.wav"),
+            5: os.path.join(self.pm_folder_path, "5.wav")
         }
 
         self.create_initial_screen()
