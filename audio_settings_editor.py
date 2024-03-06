@@ -5,6 +5,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, Toplevel
 from excel_export import export_to_excel
+from openpyxl import Workbook, load_workbook
 
 class AudioSettingsEditor:
     def __init__(self):
@@ -268,7 +269,21 @@ class AudioSettingsEditor:
             os.system("start /min wmplayer.exe /play /close \"{}\"".format(track_path))
         else:
             print(f"Track path not found for trial {trial_num}.")
+    def combine_excel_files(self, directory, combined_file):
+            combined_wb = Workbook()
+            combined_ws = combined_wb.active
+            combined_ws.append(["Trial", "Preference Adjustments", "Value (dB)"])
 
+            for i in range(1, 6):
+                excel_file = os.path.join(directory, f"PF{i}.xlsx")
+                if os.path.exists(excel_file):
+                    wb = load_workbook(excel_file)
+                    ws = wb.active
+                    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+                        row_values = [f"Trial {i}"] + [cell.value for cell in row]
+                        combined_ws.append(row_values)
+
+            combined_wb.save(combined_file)
     def save_preference(self, trial_num):
         # Read Preference.txt
         lines = self.read_file(self.file_path)
@@ -279,9 +294,24 @@ class AudioSettingsEditor:
             os.makedirs(preference_dir)
         shutil.copy(self.file_path, os.path.join(preference_dir, f"PF{trial_num}.txt"))
 
+        # Get the values for tonality, bass, treble, and intensity from Filter 2, Filter 3, Filter 4, and Filter 5 respectively
+        tonality_value = self.get_filter_value(lines, 2)
+        if tonality_value < 0:
+            tonality_value *= -2  # If negative, double the absolute value
+        elif tonality_value > 0:
+            tonality_value *= -2  # If positive, make negative
+        # If tonality_value is zero, no change is needed
+        bass_value = self.get_filter_value(lines, 3)
+        treble_value = self.get_filter_value(lines, 4)
+        intensity_value = self.get_filter_value(lines, 5)
+
         # Export lines to Excel
         excel_file = os.path.join("data", f"PF{trial_num}.xlsx")
-        export_to_excel(excel_file, lines)
+        export_to_excel(excel_file, lines, tonality_value, bass_value, treble_value, intensity_value)
+
+        # Create combined CSV file when PF5.xlsx is created
+        if trial_num == 5:
+            csv_file = os.path.join("data", "PF.csv")
 
         # Close the current trial screen
         self.pages[trial_num].destroy()
@@ -293,9 +323,10 @@ class AudioSettingsEditor:
             self.open_trial_screen(next_trial)
         # Open the ending screen if it's the last trial
         if trial_num == 5:
+            self.root.deiconify()
             self.create_ending_screen()
-
-
+            combined_excel_file = os.path.join("data", "PF_combined.xlsx")
+            self.combine_excel_files("data", combined_excel_file)
     def print_preference(self):
         if self.file_path:
             print("Preference.txt contents:")
@@ -304,38 +335,6 @@ class AudioSettingsEditor:
                     print(line.strip())
         else:
             print("Error: Preference.txt not uploaded.")
-
-    def export_to_excel(self, excel_file):
-        # Read the contents of Preference.txt
-        lines = self.read_file(self.file_path)
-
-        # Initialize variables for storing filter values
-        tonality_value = 0
-        bass_value = 0
-        treble_value = 0
-        intensity_value = 0
-
-        # Extract filter values from Preference.txt
-        for line in lines:
-            if "Filter 2" in line:
-                filter2_gain = float(line.split("Gain")[1].strip().split(" ")[0])
-                tonality_value = filter2_gain * 2
-            elif "Filter 3" in line:
-                bass_value = float(line.split("Gain")[1].strip().split(" ")[0])
-            elif "Filter 4" in line:
-                treble_value = float(line.split("Gain")[1].strip().split(" ")[0])
-            elif "Filter 5" in line:
-                intensity_value = float(line.split("Gain")[1].strip().split(" ")[0])
-
-        # Write data to Excel file
-        self.ws.append(["Preference Adjustments", "Value (dB)"])
-        self.ws.append(["Tonality", tonality_value])
-        self.ws.append(["Bass", bass_value])
-        self.ws.append(["Treble", treble_value])
-        self.ws.append(["Intensity", intensity_value])
-
-        # Save Excel file
-        self.wb.save(excel_file)
 
     # Create an instance of AudioSettingsEditor to start the application
 

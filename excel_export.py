@@ -1,17 +1,19 @@
 from openpyxl import Workbook
 
-
-def export_to_excel(file_path, lines):
+def export_to_excel(file_path, lines, tonality_value, bass_value, treble_value, intensity_value):
     wb = Workbook()
     ws = wb.active
+
+    # Write headers
     ws.append(["Preference Adjustments", "Value (dB)"])
 
-    # Extract filter values from lines and write to Excel
-    # Assuming the structure of the lines and filter values are provided in lines
-    for line in lines:
-        if "Filter" in line and "Gain" in line:
-            filter_name = line.split("Filter")[1].split(" ")[0].strip()
-            filter_gain = float(line.split("Gain")[1].strip().split(" ")[0])
-            ws.append([f"Filter {filter_name}", filter_gain])
+    # Write specific adjustments
+    ws.append(["Tonality", tonality_value])
+    ws.append(["Bass", bass_value])
+    ws.append(["Treble", treble_value])
+    ws.append(["Intensity", intensity_value])
 
+    # Save Excel file
     wb.save(file_path)
+
+
