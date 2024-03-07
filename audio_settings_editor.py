@@ -10,7 +10,7 @@ from openpyxl import Workbook, load_workbook
 class AudioSettingsEditor:
     def __init__(self):
         self.file_path = ""
-        self.pm_folder_path = os.path.join(os.getcwd(), "pm")  # Get the path to the "pm" folder in the current directory
+        self.pm_folder_path = os.path.join(os.getcwd(), "music")  # Get the path to the "music" folder in the current directory
         self.track_paths = {}
 
         # Look for audio files numbered from 1 to 5 in the "pm" folder with any audio format
