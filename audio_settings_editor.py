@@ -11,13 +11,17 @@ class AudioSettingsEditor:
     def __init__(self):
         self.file_path = ""
         self.pm_folder_path = os.path.join(os.getcwd(), "pm")  # Get the path to the "pm" folder in the current directory
-        self.track_paths = {
-            1: os.path.join(self.pm_folder_path, "1.wav"),
-            2: os.path.join(self.pm_folder_path, "2.wav"),
-            3: os.path.join(self.pm_folder_path, "3.wav"),
-            4: os.path.join(self.pm_folder_path, "4.wav"),
-            5: os.path.join(self.pm_folder_path, "5.wav")
-        }
+        self.track_paths = {}
+
+        # Look for audio files numbered from 1 to 5 in the "pm" folder with any audio format
+        for i in range(1, 6):
+            for file_name in os.listdir(self.pm_folder_path):
+                # Check if the file starts with the number and has a recognized audio file extension
+                if file_name.startswith(str(i)) and any(file_name.lower().endswith(ext) for ext in ['.mp3', '.wav', '.flac']):
+                    self.track_paths[i] = os.path.join(self.pm_folder_path, file_name)
+                    break
+
+        self.create_initial_screen()
 
         self.create_initial_screen()
 
@@ -262,11 +266,10 @@ class AudioSettingsEditor:
     def update_file(self, file_path, lines):
         with open(file_path, "w") as file:
             file.writelines(lines)
-
     def play_audio(self, trial_num):
         track_path = self.track_paths.get(trial_num)
         if track_path:
-            os.system("start /min wmplayer.exe /play /close \"{}\"".format(track_path))
+            os.startfile(track_path)
         else:
             print(f"Track path not found for trial {trial_num}.")
     def combine_excel_files(self, directory, combined_file):
