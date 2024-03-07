@@ -21,4 +21,4 @@ Filter 4: ON HSC Fc 2500 Hz Gain 0 dB Q 0.350
 Filter 5: ON PK Fc 2800 Hz Gain 0 dB Q 1.800
 Filter 6: ON LSC Fc 50 Hz Gain 0.00 dB Q 0.500
 ```
-4) Have a folder in the same directory as the program /pm/, with program material titled "1.wav" to "5.wav" respectively.
+4) If additional music files are needed, it has to be placed inside the "music" folder. Feel free to add numbers in the music name for a custom order
