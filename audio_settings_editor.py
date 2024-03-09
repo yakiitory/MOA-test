@@ -23,8 +23,6 @@ class AudioSettingsEditor:
 
         self.create_initial_screen()
 
-        self.create_initial_screen()
-
     def create_initial_screen(self):
         self.root = tk.Tk()  # Create the root window
         self.root.withdraw()  # Hide the initial screen
